@@ -7,15 +7,23 @@ void reload_gdt(void) {
 #else
     GDT* gdt = kernel.gdt;
 #endif
-    volatile GDTDescriptor descriptor;
-    descriptor.size = (PAGE_SIZE-1);
-    descriptor.addr = gdt;
+
+    struct {
+        uint16_t size;
+        uintptr_t addr;
+    } __attribute__((packed)) gdtr = {
+        .size = sizeof(*gdt) - 1,
+        .addr = (uintptr_t)gdt
+    };
+
     __asm__ volatile (
-        "lgdt (%0)"
+        "lgdt %0"
         :
-        : "r" (&descriptor)
+        : "m"(gdtr)
+        : "memory"
     );
 }
+
 void init_gdt() {
 #ifdef GLOBAL_STORAGE_GDT_IDT
     GDT* gdt = &kernel.gdt;

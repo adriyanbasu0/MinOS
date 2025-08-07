@@ -23,7 +23,7 @@
 #include "string.h"
 #include "process.h"
 #include "task.h"
-#include "exec.h" 
+#include "exec.h"
 #include "pic.h"
 #include "syscall.h"
 #include "devices.h"
@@ -44,27 +44,43 @@
 #include "epoll.h"
 #include "sockets/minos.h"
 #include "smp.h"
+#include "smt.h"
 #include "mem/shared_mem.h"
 
 #include "term/fb/fb.h"
 
-void spawn_init(void) {
+void spawn_init(void)
+{
     intptr_t e = 0;
-    const char* epath = NULL;
+    const char *epath = NULL;
     Args args;
     Args env;
     epath = "/user/init";
-    const char* argv[] = {epath, "test_arg"};
+    const char *argv[] = {epath, "test_arg"};
     args = create_args(ARRAY_LEN(argv), argv);
-    const char* envv[] = {"FOO=BAR", "BAZ=A"};
-    env  = create_args(ARRAY_LEN(envv), envv);
-    if((e = exec_new(epath, &args, &env)) < 0) {
-        printf("Failed to exec %s : %s\n",epath,status_str(e));
+    const char *envv[] = {"FOO=BAR", "BAZ=A"};
+    env = create_args(ARRAY_LEN(envv), envv);
+    if ((e = exec_new(epath, &args, &env)) < 0)
+    {
+        printf("Failed to exec %s : %s\n", epath, status_str(e));
         kabort();
     }
-    kinfo("Spawning `%s` id=%zu tid=%zu", epath, (size_t)e, ((Process*)(kernel.processes.items[(size_t)e]))->main_thread->id);
+    kinfo("Spawning `%s` id=%zu tid=%zu", epath, (size_t)e, ((Process *)(kernel.processes.items[(size_t)e]))->main_thread->id);
 }
-void _start() {
+// for testing
+#if 0
+   static void trigger_gpf() {
+    asm volatile (
+        "mov $0xFFFF, %%ax\n\t"  // Invalid segment selector
+        "mov %%ax, %%ds\n\t"     // Load into data segment to trigger GPF
+        :
+        :
+        : "ax"
+    );
+ }
+#endif
+void _start()
+{
     disable_interrupts();
     BREAKPOINT();
     serial_init();
@@ -103,8 +119,11 @@ void _start() {
     init_charqueue();
     // Devices
     init_pci();
-    // SMP
+    // SMP and SMT
     init_smp();
+    uint32_t apic_id = get_lapic_id();
+    init_smt(apic_id);
+
     // Initialisation for process related things
     init_memregion();
     init_processes();
@@ -124,7 +143,7 @@ void _start() {
 
     spawn_init();
     // If you run into problems with PS2. Enable this:
-    // I have no idea why this shit works but I think it tells the controller
+    // I have no idea why this sh#t works but I think it tells the controller
     // I'm ready to listen for keyboard input or something when I haven't answered its interrupts before
     // (i.e. it thinks it shouldn't send interrupts and this kind of wakes it up saying, hey dude, I'm listening)
 #if 0
@@ -134,7 +153,8 @@ void _start() {
     disable_interrupts();
     irq_clear(kernel.task_switch_irq);
     enable_interrupts();
-    for(;;) {
+    for (;;)
+    {
         asm volatile("hlt");
     }
 }

@@ -73,11 +73,25 @@ MemoryList* memlist_find_available(struct list *list, MemoryRegion* result, void
 
 // TODO: Binary search
 MemoryList* memlist_find(struct list *list, void* address) {
-    MemoryList* head = (MemoryList*)list->next;
-    while(&head->list != list) {
-        if((void*)head->region->address > address) return NULL;
-        if((void*)head->region->address == address) return head;
-        head = (MemoryList*)head->list.next;
+    if (!list || !address) return NULL; // basic sanity checks
+
+    MemoryList* current = (MemoryList*)list->next;
+
+    // Iterate until we loop back to the list head
+    while (&current->list != list) {
+        void* region_addr = (void*)current->region->address;
+
+        if (region_addr > address) {
+            // Since list is sorted, no match possible beyond this point
+            return NULL;
+        }
+        if (region_addr == address) {
+            return current; // Found the matching MemoryList
+        }
+
+        current = (MemoryList*)current->list.next;
     }
+
+    // Not found
     return NULL;
 }

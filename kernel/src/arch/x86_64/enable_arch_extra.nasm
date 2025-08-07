@@ -1,15 +1,15 @@
 [BITS 64]
 section .text
 global enable_cpu_features
+
 enable_cpu_features:
-    call enable_sse
-    ret
-enable_sse:
     mov rax, cr0
-    and ax, 0xFFFB
-    or ax, 0x2
+    and rax, ~(1 << 2)          ; Clear EM bit (bit 2)
+    or  rax,  (1 << 1)          ; Set MP bit (bit 1)
     mov cr0, rax
+
     mov rax, cr4
-    or ax, (3 << 9)
-    mov cr4, rax 
+    or  rax, (1 << 9) | (1 << 10)  ; Set OSFXSR (bit 9) and OSXMMEXCPT (bit 10)
+    mov cr4, rax
+
     ret

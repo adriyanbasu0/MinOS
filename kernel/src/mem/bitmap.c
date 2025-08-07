@@ -98,8 +98,8 @@ void init_bitmap() {
              last_available = i;
         }
     } 
-    assert(last_available != -1 && "Cannot operate on 0 RAM");
-    assert(biggest_avail != -1 && "Cannot operate on 0 RAM");
+    assert(last_available != -1 && "Why are you on 0 RAM this os cant run on 0RAM dummy");
+    assert(biggest_avail != -1 && "Why are you on 0 RAM this os cant run on 0RAM dummy");
     struct limine_memmap_entry* biggest = limine_memmap_request.response->entries[biggest_avail];
     struct limine_memmap_entry* last = limine_memmap_request.response->entries[last_available];
     assert(biggest->base < PHYS_RAM_MIRROR_SIZE && "Biggest data block has to be below 4GB. Sorry");
